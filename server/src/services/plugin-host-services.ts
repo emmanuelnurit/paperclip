@@ -66,6 +66,23 @@ const DNS_LOOKUP_TIMEOUT_MS = 5_000;
 const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
 const TELEMETRY_EVENT_NAME_REGEX = /^[a-z0-9][a-z0-9_-]*$/;
 
+// Module-level gate for loopback access from plugin fetch. Off by default so
+// cloud / authenticated deployments keep the strict SSRF posture. Enabled only
+// on fully-local deployments (local_trusted + private) via
+// configurePluginHostFetch() so plugins can talk to same-host services such as
+// local Ollama / LM Studio / llama.cpp. The rest of the private ranges
+// (RFC 1918, link-local, ULA, unspecified) stay blocked regardless — a plugin
+// can reach its own host, never the LAN.
+let pluginHostAllowLoopback = false;
+
+export function configurePluginHostFetch(opts: { allowLoopback: boolean }): void {
+  pluginHostAllowLoopback = Boolean(opts.allowLoopback);
+}
+
+export function __resetPluginHostFetchConfigForTests(): void {
+  pluginHostAllowLoopback = false;
+}
+
 /**
  * Check if an IP address is in a private/reserved range (RFC 1918, loopback,
  * link-local, etc.) that plugins should never be able to reach.
@@ -87,12 +104,12 @@ function isPrivateIP(ip: string): boolean {
     if (second >= 16 && second <= 31) return true;
   }
   if (ip.startsWith("192.168.")) return true;
-  if (ip.startsWith("127.")) return true;                   // loopback
+  if (ip.startsWith("127.")) return !pluginHostAllowLoopback;  // loopback (gated)
   if (ip.startsWith("169.254.")) return true;               // link-local
   if (ip === "0.0.0.0") return true;
 
   // IPv6 patterns
-  if (lower === "::1") return true;                          // loopback
+  if (lower === "::1") return !pluginHostAllowLoopback;        // loopback (gated)
   if (lower.startsWith("fc") || lower.startsWith("fd")) return true; // ULA
   if (lower.startsWith("fe80")) return true;                 // link-local
   if (lower === "::") return true;
