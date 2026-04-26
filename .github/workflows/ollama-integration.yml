@@ -53,7 +53,10 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # post-merge leg: tolerate a not-yet-refreshed lockfile so a master push
+        # that races refresh-lockfile.yml does not break this workflow. pr.yml is
+        # the strict-reproducibility gate; this leg runs after merge.
+        run: pnpm install --no-frozen-lockfile
 
       - name: Typecheck ollama-local
         run: pnpm --filter @paperclipai/adapter-ollama-local typecheck
@@ -92,7 +95,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Wait for Ollama to accept traffic
         run: |
@@ -115,4 +118,7 @@ jobs:
             --max-time 600
 
       - name: Run real-ollama integration suite
-        run: pnpm --filter @paperclipai/adapter-ollama-local test
+        # Scope to the gated real-backend file so we do not redundantly re-run
+        # the mock suite the `mock` job already covered. vitest accepts a
+        # filename filter as a positional arg; -- forwards it through pnpm.
+        run: pnpm --filter @paperclipai/adapter-ollama-local test -- src/server/integration/real-ollama.integration.test.ts

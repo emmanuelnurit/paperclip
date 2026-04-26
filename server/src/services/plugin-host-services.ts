@@ -87,15 +87,28 @@ export function __resetPluginHostFetchConfigForTests(): void {
  * Check if an IP address is in a private/reserved range (RFC 1918, loopback,
  * link-local, etc.) that plugins should never be able to reach.
  *
- * Handles IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1) which Node's
- * dns.lookup may return depending on OS configuration.
+ * Handles IPv4-mapped IPv6 addresses in both dotted (::ffff:127.0.0.1) and
+ * all-hex (::ffff:7f00:1) forms, since either may appear depending on the
+ * resolver / OS configuration.
  */
 function isPrivateIP(ip: string): boolean {
   const lower = ip.toLowerCase();
 
-  // Unwrap IPv4-mapped IPv6 addresses (::ffff:x.x.x.x) and re-check as IPv4
-  const v4MappedMatch = lower.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
-  if (v4MappedMatch && v4MappedMatch[1]) return isPrivateIP(v4MappedMatch[1]);
+  // Unwrap IPv4-mapped IPv6 addresses in dotted form (::ffff:x.x.x.x)
+  const v4MappedDotted = lower.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
+  if (v4MappedDotted && v4MappedDotted[1]) return isPrivateIP(v4MappedDotted[1]);
+
+  // Unwrap IPv4-mapped IPv6 addresses in all-hex form (::ffff:HHHH:HHHH)
+  const v4MappedHex = lower.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (v4MappedHex && v4MappedHex[1] && v4MappedHex[2]) {
+    const high = parseInt(v4MappedHex[1], 16);
+    const low = parseInt(v4MappedHex[2], 16);
+    const a = (high >> 8) & 0xff;
+    const b = high & 0xff;
+    const c = (low >> 8) & 0xff;
+    const d = low & 0xff;
+    return isPrivateIP(`${a}.${b}.${c}.${d}`);
+  }
 
   // IPv4 patterns
   if (ip.startsWith("10.")) return true;
