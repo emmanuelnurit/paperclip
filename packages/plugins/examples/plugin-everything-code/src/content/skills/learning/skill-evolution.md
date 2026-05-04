@@ -1,0 +1,11 @@
+---
+title: Skill Evolution
+description: Promoting confirmed instincts into named skills.
+---
+
+# Skill Evolution
+
+- Source instincts only from explicit human feedback (review comments, issue resolutions).
+- Confidence rises with hits across distinct projects, falls with overrides.
+- Promotion to a skill requires a human-readable name and a non-trivial body.
+- Instincts have a ttl: stale, never-confirmed instincts are pruned.
