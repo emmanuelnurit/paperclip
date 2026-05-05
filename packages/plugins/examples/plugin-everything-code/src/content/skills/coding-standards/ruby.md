@@ -1,0 +1,13 @@
+---
+title: Ruby Coding Standards
+description: Pragmatic modern Ruby (3.3+) with type signatures via RBS.
+---
+
+# Ruby Coding Standards
+
+- Use the official formatter and linter in CI.
+- Prefer immutability and explicit types at module boundaries.
+- Errors at boundaries; do not swallow.
+- Tests: official framework, table-driven where natural.
+- Avoid speculative abstractions; cut features that are not asked for.
+- Document only the WHY of non-obvious code; let names carry the WHAT.
