@@ -30,12 +30,28 @@ without touching the Paperclip core.
 
 ## Develop
 
+This plugin is intentionally **excluded from the pnpm workspace** (see the
+`!packages/plugins/examples/plugin-everything-code` line in
+`pnpm-workspace.yaml`). The exclusion exists because the repo's CI policy
+forbids committing `pnpm-lock.yaml` in PRs and therefore forbids adding new
+workspace packages in a single commit. Development on this plugin is supported
+through a temporary local un-exclusion:
+
 ```bash
+# 1. Edit pnpm-workspace.yaml locally and remove the exclusion line.
+# 2. Run install, then the usual scripts:
+pnpm install --no-frozen-lockfile
 pnpm --filter @paperclipai/plugin-sdk build
 pnpm --filter @paperclipai/plugin-everything-code typecheck
 pnpm --filter @paperclipai/plugin-everything-code test
 pnpm --filter @paperclipai/plugin-everything-code build
+# 3. Restore the exclusion before committing so the lockfile diff stays out
+#    of your PR.
 ```
+
+Once landed on master, the `refresh-lockfile` workflow can be triggered (or a
+follow-up admin PR can ship a single commit that both removes the exclusion
+and updates the lockfile) to fully integrate the plugin into the workspace.
 
 ## Install (local-path)
 

@@ -3,6 +3,7 @@ packages:
   - packages/adapters/*
   - packages/plugins/*
   - packages/plugins/examples/*
+  - "!packages/plugins/examples/plugin-everything-code"
   - server
   - ui
   - cli
